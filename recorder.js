@@ -8,16 +8,13 @@ const utils = {
          * 详细=>http://t.cn/RajQ7IR
          */
 
-        const BUFFER_SIZE = 4096
-        const INPUT_CHANNEL_COUNT = 2
-        const OUTPUT_CHANNEL_COUNT = 2
+        const option = {
+            bufferSize: 4096,       // 每个块的大小是4k
+            inputChannelCount: 2,   // 输入为双声道
+            outputChannelCount: 2   // 输出为双声道
+        }
 
-        // * createJavaScriptNode已被废弃
-        let creator = audioContext.createScriptProcessor || audioContext.createJavaScriptNode
-
-        creator = creator.bind(audioContext)
-
-        return creator(BUFFER_SIZE, INPUT_CHANNEL_COUNT, OUTPUT_CHANNEL_COUNT)
+        return audioContext.createScriptProcessor(option.bufferSize, option.inputChannelCount, option.outputChannelCount)
     },
 
     mergeArray(list) {
@@ -35,20 +32,20 @@ const utils = {
         return merge
     },
 
-    // 交叉合并左右声道的数据
-    interleaveLeftAndRight(left, right) {
-        let totalLength = left.length + right.length
-        let data = new Float32Array(totalLength)
+    // 交叉合并左右声道数据
+    mergeChannel(left, right) {
+        let length = left.length + right.length
+        let merge = new Float32Array(length)
         for (let i = 0; i < left.length; i++) {
             let k = i * 2
-            data[k] = left[i]
-            data[k + 1] = right[i]
+            merge[k] = left[i]
+            merge[k + 1] = right[i]
         }
-        return data
+        return merge
     },
 
     writeUTFBytes(view, offset, string) {
-        var lng = string.length;
+        let lng = string.length;
         for (let i = 0; i < lng; i++) {
             view.setUint8(offset + i, string.charCodeAt(i));
         }
@@ -62,11 +59,13 @@ class Wav {
 
         let buffer = new ArrayBuffer(data.length * 2 + WAV_HEAD_SIZE)
 
-        // 需要用一个view来操控buffer
+        // 用DataView来操控buffer
         this.view = new DataView(buffer)
 
+        // 写入wav头部信息
         this.writeHead(data.length * 2)
 
+        // 写入PCM数据
         this.writeFile(data)
 
         return buffer
@@ -213,7 +212,7 @@ class Recorder {
         let right = utils.mergeArray(this.store.channel_right)
 
         // 声道数据合并
-        let datas = utils.interleaveLeftAndRight(left, right)
+        let datas = utils.mergeChannel(left, right)
 
         // 转换并返回wav录音数据(blob)
         return new Wav(datas)
