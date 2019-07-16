@@ -1,7 +1,7 @@
 # recorder
 
 HTML5 录音机实现
-把麦克风的音频转化为pcm/wav，并需要可自行操作
+把麦克风的音频转化为pcm/wav，按需要自行操作
 
 ## 示例
 Recorder config是可选参数，传入后会合并到 navigator.mediaDevices.getUserMedia(constraints) constraints-> audio
